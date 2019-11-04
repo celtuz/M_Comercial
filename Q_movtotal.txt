@@ -1,0 +1,238 @@
+#############################################################
+# MODELO E-COMMERCE MOVISTAR TOTAL
+############################################################
+
+#Librerias:
+library(dplyr)
+library(tidyr)
+library(ggplot2movies)
+library(scales)
+getwd()
+
+m_mt <- read.delim("MT_400K.csv", sep = ",")
+m_mt
+
+#Tipos de datos:
+
+str(m_mt)
+
+#Actualizacion con data de 400K registros (Jun-Ago 19)
+
+#Proporcion Target:Previo a la categorizacion
+
+prop_targ <- m_mt %>%
+  group_by(esTransaccion) %>%
+  summarise(s = sum(esTransaccion), n = n())
+prop_targ
+
+#1: 38625
+#0: 424296  ratio: 8.34% 1s
+
+#Verificando:
+prop.table(table(m_mt$esTransaccion)) * 100
+#0: 91.65%
+#1: 8.34%
+
+#Eliminando algunos campos por no aportar valores para el modelamiento:
+
+m_mt$fecha <- NULL
+m_mt$lp_oferta_multiofertafija <- NULL
+m_mt$catalogo_recomendador <-NULL
+m_mt$catalogo_detalle <-NULL
+m_mt$catalogo_comparador <-NULL
+m_mt$movistar_landing_caeq <-NULL
+m_mt$movistar_landing_porta <-NULL
+
+#Convirtiendo a Factores las variables correspondientes:
+
+m_mt$ds <- as.factor(m_mt$ds)
+m_mt$lunes <- as.factor(m_mt$lunes)
+m_mt$martes <- as.factor(m_mt$martes)
+m_mt$miercoles <- as.factor(m_mt$miercoles)
+m_mt$jueves <- as.factor(m_mt$jueves)
+m_mt$viernes <- as.factor(m_mt$viernes)
+m_mt$sabado <- as.factor(m_mt$sabado)
+m_mt$domingo <- as.factor(m_mt$domingo)
+
+m_mt$esMobile <- as.factor(m_mt$esMobile)
+m_mt$esDesktop <- as.factor(m_mt$esDesktop)
+m_mt$esTablet <- as.factor(m_mt$esTablet)
+
+m_mt$Android <- as.factor(m_mt$Android)
+m_mt$Windows <- as.factor(m_mt$Windows)
+m_mt$iOS <- as.factor(m_mt$iOS)
+m_mt$Linux <- as.factor(m_mt$Linux)
+m_mt$WindowsPhone <- as.factor(m_mt$WindowsPhone)
+
+m_mt$menor_25 <- as.factor(m_mt$menor_25)
+m_mt$entre_25_141 <- as.factor(m_mt$entre_25_141)
+m_mt$entre_141_516 <- as.factor(m_mt$entre_141_516)
+m_mt$tiempoSegundos <- as.factor(m_mt$tiempoSegundos)
+
+m_mt$Chrome <- as.factor(m_mt$Chrome)
+m_mt$Samsung_internet <- as.factor(m_mt$Samsung_internet)
+m_mt$Android_Webview <- as.factor(m_mt$Android_Webview)
+m_mt$Android_Browser <- as.factor(m_mt$Android_Browser)
+m_mt$Safari <- as.factor(m_mt$Safari)
+m_mt$Firefox <- as.factor(m_mt$Firefox)
+m_mt$Internet_explorer <- as.factor(m_mt$Internet_explorer)
+m_mt$Edge <- as.factor(m_mt$Edge)
+m_mt$Opera <- as.factor(m_mt$Opera)
+
+m_mt$Samsung <- as.factor(m_mt$Samsung)
+m_mt$Huawei <- as.factor(m_mt$Huawei)
+m_mt$LG <- as.factor(m_mt$LG)
+m_mt$Sony <- as.factor(m_mt$Sony)
+m_mt$ZTE <- as.factor(m_mt$ZTE)
+m_mt$Motorola <- as.factor(m_mt$Motorola)
+m_mt$Alcatel <- as.factor(m_mt$Alcatel)
+m_mt$Apple <- as.factor(m_mt$Apple)
+m_mt$Lenovo <- as.factor(m_mt$Lenovo)
+
+m_mt$madrugada<- as.factor(m_mt$madrugada)
+m_mt$dia<- as.factor(m_mt$dia)
+m_mt$tarde<- as.factor(m_mt$tarde)
+m_mt$noche<- as.factor(m_mt$noche)
+
+m_mt$mas_seis_paginasvistas<- as.factor(m_mt$mas_seis_paginasvistas)
+
+m_mt$home_movistar<- as.factor(m_mt$home_movistar)
+m_mt$catalogo_detalle<- as.factor(m_mt$catalogo_detalle)
+m_mt$catalogo_recomendador<- as.factor(m_mt$catalogo_recomendador)
+m_mt$catalogo_comparador<- as.factor(m_mt$catalogo_comparador)
+m_mt$movistar_landing_caeq<- as.factor(m_mt$movistar_landing_caeq)
+m_mt$movistar_landing_porta<- as.factor(m_mt$movistar_landing_porta)
+m_mt$lp_campana<- as.factor(m_mt$lp_campana)
+m_mt$landing_multiproducto<- as.factor(m_mt$landing_multiproducto)
+m_mt$lp_campana_forward<- as.factor(m_mt$lp_campana_forward)
+m_mt$lp_informativa<- as.factor(m_mt$lp_informativa)
+m_mt$lp_oferta_multiofertafija<- as.factor(m_mt$lp_oferta_multiofertafija)
+
+m_mt$tiempoSegundos<-as.integer(m_mt$tiempoSegundos)
+
+#Colocando etiquetas al Target:
+
+m_mt$esTransaccion <- if_else(m_mt$esTransaccion=="1" , "1", "0")
+m_mt$esTransaccion <- as.factor(m_mt$esTransaccion)
+
+
+###   Analisis Descriptivo:
+#Correlaciones:
+library("psych")
+library("ggplot2")
+library("car")
+library("Hmisc")
+library("corrplot")
+library(ggplot2)
+
+#Correlaciones:
+m_mt_num<-m_mt[ ,c(3,49,25,55)]
+str(m_mt_num)
+
+cor(m_mt_num)
+
+##Alta correlacion entre : n_visitas_anteriores y n_sesion : 98%
+
+#Escalamiento de numericas:
+library(scales)
+
+scale(x, center = TRUE, scale = TRUE)
+
+m_mt$n_sesion.rs<-rescale(m_mt$n_sesion)
+
+m_mt$n_paginas_vistas.rs<-rescale(m_mt$n_paginas_vistas)
+
+m_mt$tiempoSegundos.rs<- rescale(m_mt$tiempoSegundos)
+
+m_mt_rs$n_sesion <-NULL
+m_mt_rs$n_paginas_vistas<-NULL
+m_mt_rs$tiempoSegundos<-NULL
+
+## Renombrando el set de datos:
+m_mt_rs <- m_mt
+
+#Comparando las correlaciones nuevamente:
+cor(m_mt_num) #Si, nuevamente la correlacion entre las mismas, por tanto se elimina una de ellas.
+
+#Elimino una de ellas : 
+m_mt_rs$n_visitas_anteriores<- NULL
+
+#################### GRAFICAS############################
+#V.numericas :
+#n_sesion
+#tiempoSegundos
+#n_paginas_vistas
+#n_visitas_anteriores
+
+library(ggplot2)
+ggplot(m_mt, aes(x = n_sesion, y = n_paginas_vistas, color = esTransaccion)) + geom_point()
+ggplot(m_mt, aes(x = n_sesion, y = tiempoSegundos, color = esTransaccion)) + geom_point()
+
+ggplot(m_mt, aes(x = n_visitas_anteriores, y = n_paginas_vistas, color = esTransaccion)) + geom_point()
+ggplot(m_mt, aes(x = n_visitas_anteriores, y = tiempoSegundos, color = esTransaccion)) + geom_point()
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = canal, fill = esTransaccion))
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = ds, fill = esTransaccion))
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = esDesktop, fill = esTransaccion))
+
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = catalogo_recomendador, fill = esTransaccion))
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = catalogo_detalle, fill = esTransaccion))
+
+ggplot(data = m_mt)+
+  geom_bar(mapping = aes(x = home_movistar, fill = esTransaccion))
+
+
+############# MODELAMIENTO ############################
+##########################################################
+
+#Modelo logistico inicial:
+
+mod1.logit <- glm(esTransaccion ~ ., 
+                    data = m_mt_rs, family = "binomial")
+summary(mod1.logit)
+#AIC : 198955
+
+#No significativas : ds7, domingo-lunes, canal Email, canal SEO, canal SEO, esDesktop,
+#esDesktop, esTablet, Android, iOS, Linux, Windows phone, Safari, LG, Sony, Apple, dia, 
+#noche, lp_informativa.
+
+exp(coefficients(mod1.logit))
+
+#Division del dataset en Training y Testing:
+library(caTools)
+set.seed(1234)
+split <- sample.split(m_mt$esTransaccion, SplitRatio = 0.70)
+
+#Train:
+train_mt <- subset(m_mt, split == TRUE)
+
+table(train_mt$esTransaccion) # 1: 27038 / 0: 297007
+
+#Test:
+test_mt <- subset(m_mt, split == FALSE)
+
+table(test_mt$esTransaccion) # 1: 11587 / 0: 127289
+
+# CROSS VALIDATION : Para obtener mejores resultados en cuanto a la medición 
+#de la calidad de la predicción de los modelos.
+library(caret)
+train_mt <- trainControl(method="cv", number=5)
+
+
+
+
+
+
+
+
+#Colocando etiquetas al Target:
+
